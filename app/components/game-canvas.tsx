@@ -16,7 +16,7 @@ type FlyingItem = GroceryDefinition & {
 
 type GameStatus = "ready" | "playing" | "saving" | "finished" | "error";
 
-export function GameCanvas() {
+export function GameCanvas({ onSessionSaved }: { onSessionSaved?: (session: GameSession | null) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const itemsRef = useRef<FlyingItem[]>([]);
   const animationRef = useRef<number | null>(null);
@@ -62,9 +62,10 @@ export function GameCanvas() {
       return;
     }
     setSession(result.data);
+    onSessionSaved?.(result.data);
     statusRef.current = "finished";
     setStatus("finished");
-  }, []);
+  }, [onSessionSaved]);
 
   const endGame = useCallback(() => {
     if (statusRef.current !== "playing") return;
@@ -161,6 +162,7 @@ export function GameCanvas() {
     setLives(STARTING_LIVES);
     setTimeLeft(GAME_SECONDS);
     setSession(null);
+    onSessionSaved?.(null);
     setError(null);
     statusRef.current = "playing";
     setStatus("playing");
@@ -168,7 +170,7 @@ export function GameCanvas() {
     lastFrameRef.current = performance.now();
     lastSpawnRef.current = 0;
     animationRef.current = requestAnimationFrame(drawFrame);
-  }, [drawFrame]);
+  }, [drawFrame, onSessionSaved]);
 
   const sliceAt = useCallback((clientX: number, clientY: number) => {
     if (statusRef.current !== "playing") return;

@@ -1,5 +1,7 @@
-import { GameCanvas } from "@/app/components/game-canvas";
+import { AppExperience } from "@/app/components/app-experience";
+import { getActiveCoupons } from "@/lib/data/coupons";
 
-export default function Home() {
-  return <main><GameCanvas /></main>;
+export default async function Home() {
+  const coupons = await getActiveCoupons();
+  return <main><AppExperience coupons={coupons} /></main>;
 }
