@@ -5,6 +5,7 @@ import type { Coupon } from "@/lib/data/coupons";
 import { createOptIn, type OptIn } from "@/lib/data/optins";
 import { redeemCoupon } from "@/lib/data/redemptions";
 import type { GameSession } from "@/lib/data/sessions";
+import { isCouponEligible, rankCouponsByFit } from "@/lib/coupons/eligibility";
 
 export function ClaimPanel({ session, coupons }: { session: GameSession | null; coupons: Coupon[] }) {
   const [optIn, setOptIn] = useState<OptIn | null>(null);
@@ -21,9 +22,7 @@ export function ClaimPanel({ session, coupons }: { session: GameSession | null; 
 
   const eligibleCoupons = useMemo(() => {
     if (!session) return [];
-    return coupons
-      .filter((coupon) => verifiedScore >= coupon.points_required)
-      .sort((a, b) => (b.points_required / Math.max(verifiedScore, 1)) - (a.points_required / Math.max(verifiedScore, 1)));
+    return rankCouponsByFit(coupons.filter((coupon) => isCouponEligible(coupon, verifiedScore)), verifiedScore);
   }, [coupons, session, verifiedScore]);
 
   function submitOptIn(event: React.FormEvent<HTMLFormElement>) {
@@ -121,7 +120,7 @@ function CouponPreview({ coupon }: { coupon: Coupon }) {
   return (
     <article className="coupon-card">
       <div className="coupon-points">{coupon.points_required}<small>mata</small></div>
-      <h3>{coupon.title_bm}</h3><p>{coupon.description_bm}</p>
+      <h3>{coupon.title_bm}</h3><p>{coupon.description_bm || "Ganjaran hasil segar untuk anda."}</p>
       <span className="locked-label">{exhausted ? "Kupon habis" : "Main untuk buka"}</span>
     </article>
   );

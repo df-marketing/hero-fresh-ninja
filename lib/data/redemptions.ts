@@ -1,12 +1,15 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
 
 export async function redeemCoupon(input: {
   sessionId: string;
   optInId: string;
   couponId: string;
 }): Promise<{ code: string | null; error: string | null; exhausted?: boolean; duplicate?: boolean }> {
+  const rateLimit = await consumeRateLimit({ action: "redemption", maxAttempts: 5 });
+  if (rateLimit.limited) return { code: null, error: "Terlalu banyak cubaan, tunggu sebentar" };
   const supabase = await createClient();
   const [{ data: session }, { data: coupon }, { data: optIn }] = await Promise.all([
     supabase.from("game_sessions").select("id,score").eq("id", input.sessionId).single(),

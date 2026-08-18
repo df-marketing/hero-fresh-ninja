@@ -2,10 +2,12 @@
   "name": "vibe-stack-supabase",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "test": "node --test --experimental-strip-types tests/core.test.mts",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
   },

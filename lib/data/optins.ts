@@ -1,6 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
+import { isValidMalaysianMobile, normalizePhone } from "@/lib/validation/optin";
 
 export type OptIn = {
   id: string;
@@ -8,13 +10,6 @@ export type OptIn = {
   phone: string;
   consent_given: boolean;
 };
-
-function normalizePhone(value: string) {
-  const compact = value.replace(/[\s()-]/g, "");
-  if (compact.startsWith("+60")) return `0${compact.slice(3)}`;
-  if (compact.startsWith("60")) return `0${compact.slice(2)}`;
-  return compact;
-}
 
 export async function createOptIn(input: {
   name: string;
@@ -24,10 +19,12 @@ export async function createOptIn(input: {
 }): Promise<{ data: OptIn | null; error: string | null; sessionScore?: number; field?: "name" | "phone" | "consent" }> {
   const name = input.name.trim().replace(/\s+/g, " ");
   const phone = normalizePhone(input.phone);
+  const rateLimit = await consumeRateLimit({ action: "opt_in", maxAttempts: 3 });
+  if (rateLimit.limited) return { data: null, error: "Terlalu banyak cubaan, tunggu sebentar" };
   if (name.length < 2 || name.length > 80) {
     return { data: null, error: "Masukkan nama yang sah", field: "name" };
   }
-  if (!/^01\d{8,9}$/.test(phone)) {
+  if (!isValidMalaysianMobile(phone)) {
     return { data: null, error: "Masukkan nombor telefon Malaysia yang sah", field: "phone" };
   }
   if (!input.consentGiven) {
